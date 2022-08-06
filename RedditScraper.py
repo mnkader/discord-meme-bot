@@ -4,7 +4,8 @@ import urllib.request
 
 class RedditScraper:
 
-    def __init__(self, path, client_id, client_secret, user_agent, subreddit, posts_limit):
+    def __init__(self, path, client_id, client_secret, user_agent, subreddit, posts_limit, profanity_checker):
+        self.profanity_check = profanity_checker
         self.posts_limit = posts_limit
         self.path = path
         self.image_urls = []
@@ -25,24 +26,29 @@ class RedditScraper:
     #refreshes the posts then gets the new meme list, sets counter to 0
     def refresh(self):
         print('refreshing...')
-        self.delete_downloaded_images()
         self.counter = 0 
         self.image_urls = []
         self.image_captions = [] 
         self.find_memes(self.posts_limit)
 
+    def add_profanity(self, word):
+        self.profanity_check.add_bad_word(word)
+
+    def has_profanity(self, caption):
+        return self.profanity_check.contains_profanity(caption)
+
     def filter_posts(self, posts):
         for post in posts:
-            if(self.is_image(post)):
+            if(self.is_image(post) and not self.has_profanity(str(post.title))):
                 self.image_urls.append(str(post.url))
                 self.image_captions.append(str(post.title))
     
     #gets all posts self.post that have image links
     def find_memes(self, posts_limit):
-        posts = self.subreddit.hot(limit=posts_limit)
+        posts = self.subreddit.hot(limit=posts_limit-(posts_limit/2))
         self.filter_posts(posts)
         if(len(self.image_urls) < posts_limit):
-            posts = self.subreddit.new(limit=posts_limit)
+            posts = self.subreddit.new(limit=(posts_limit-len(self.image_urls)))
             self.filter_posts(posts)  
     
     #returns true if the post url is an image link
@@ -57,36 +63,25 @@ class RedditScraper:
     def is_used_image(self, url):
         return url in self.used_urls
     
-    #data[0][0]: local url, data[1]: http url, data[2]: image caption    
+    #data[0]: image caption, data[1]: http url
     def get_meme(self):
         #checks if posts need to be refreshed
         if(self.counter >= len(self.image_urls)):
             self.refresh()
             
-        data = self.download_image()
+        data = self.get_image()
             
-        #add downloaded image to local images list
-        if(data[0] != None):
-            self.local_images.append(data[0])
         #add downloaded image to used image urls list
         if(data[1] != None):
             self.used_urls.append(data[1])
         return data
     
-    def delete_downloaded_images(self):
-        print('TODO')
-    
-    def download_image(self):
+    def get_image(self):
         for x in range(len(self.image_urls)):
-            #if image is not used, download and return it
+            #if image is not used, return it
             if(not self.is_used_image(self.image_urls[x])):
                 image_url = self.image_urls[x]
                 image_caption = self.image_captions[x]
-                if(image_url.split('/')[3] != None):
-                    image_name = image_url.split('/')[3]
-                else: 
-                    image_name = 'temp' + str(x) + 'jpg'
-                local_url = urllib.request.urlretrieve(image_url, self.path + '/' + image_name)
-                return [local_url, image_url, image_caption]
+                return [image_caption,image_url]
         self.find_memes(self.posts_limit + 5)
-        return self.download_image()
+        return self.get_image()
