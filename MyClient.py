@@ -32,15 +32,19 @@ class MyClient(discord.Client):
         )
   
     async def on_message(self, message):
-        if message.content.startswith('!'):
-            if "meme" in message.content:
-                await self.send_image(message, self.reddit_conn)
-            if "funny" in message.content:
-                await self.send_image(message, self.reddit_memes)
-        if message.content.startswith('##'):
-            self.profanity_check.add_bad_word(message.content[2:]) 
-            print(self.profanity_check.contains_profanity(message.content[2:]))            
-            await message.channel.send('I can\'t words today :( But I definitly won\'t be using that word again!')
+        try:
+            if message.content.startswith('!'):
+                if "meme" in message.content:
+                    await self.send_image(message, self.reddit_conn)
+                if "funny" in message.content:
+                    await self.send_image(message, self.reddit_memes)
+            if message.content.startswith('##'):
+                self.profanity_check.add_bad_word(message.content[2:]) 
+                print(self.profanity_check.contains_profanity(message.content[2:]))            
+                await message.channel.send('I can\'t words today :( But I definitly won\'t be using that word again!')
+        except:
+            await message.channel.send('I find your lack of memes disturbing!')
+            await message.channel.send('https://i.ytimg.com/vi/F1xAUfdK9FE/maxresdefault.jpg')
 
     async def send_image(self, message, connection):
         data = connection.get_meme()
