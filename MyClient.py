@@ -12,7 +12,7 @@ class MyClient(discord.Client):
     def __init__(self):
         super().__init__()
         self.config = Config()
-        self.profanity_check = ProfanityCheck()
+        self.profanity_check = ProfanityCheck('TODO', 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe')
         self.token = self.config.get_token()
         self.path = self.config.get_path()
 
@@ -35,8 +35,6 @@ class MyClient(discord.Client):
         if message.content.startswith('!'):
             if "meme" in message.content:
                 await self.send_image(message, self.reddit_conn)
-            if "aati" in message.content:
-                await message.channel.send('https://youtu.be/AiIBKcd4m5Q?t=97')
             if "funny" in message.content:
                 await self.send_image(message, self.reddit_memes)
         if message.content.startswith('##'):

@@ -30,13 +30,20 @@ class RedditScraper:
         self.image_urls = []
         self.image_captions = [] 
         self.find_memes(self.posts_limit)
-
+    
+    #implements functionality from ProfanityCheck.py
     def add_profanity(self, word):
         self.profanity_check.add_bad_word(word)
-
+    
+    #implements functionality from ProfanityCheck.py
     def has_profanity(self, caption):
         return self.profanity_check.contains_profanity(caption)
+    
+    #implements functionality from ProfanityCheck.py
+    def image_is_profane(self, url):
+        return self.profanity_check.check_image(url)
 
+    #does the basic checks to see if this post is worth keeping
     def filter_posts(self, posts):
         for post in posts:
             if(self.is_image(post) and not self.has_profanity(str(post.title))):
@@ -51,9 +58,9 @@ class RedditScraper:
             posts = self.subreddit.new(limit=(posts_limit-len(self.image_urls)))
             self.filter_posts(posts)  
     
-    #returns true if the post url is an image link
+    #returns true if the post url is an image link, and is not profane
     def is_image(self, post):
-        return self.pattern.search(post.url) != None      
+        return self.pattern.search(post.url) != None and not self.image_is_profane(post.url)      
 
     #creates a pattern used to check if a url is an image link
     def load_image_types(self):
@@ -76,6 +83,7 @@ class RedditScraper:
             self.used_urls.append(data[1])
         return data
     
+    #returns an image caption and url
     def get_image(self):
         for x in range(len(self.image_urls)):
             #if image is not used, return it
