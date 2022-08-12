@@ -91,8 +91,14 @@ async def send_programming_meme(ctx):
 @discord_bot.command(name='funny')
 async def send_normal_meme(ctx):
     data = await client.get_caption_and_image('memes')
-    await ctx.send(data[0]) #image caption
-    await ctx.send(data[1])  #actual image
+    if data[0] != None and data[1] != None:
+        await ctx.send(data[0]) #image caption
+        await ctx.send(data[1])  #actual image
+    else:
+        await ctx.send('I find the lack of memes Disturbing...') #image caption
+        await ctx.send('https://i.ytimg.com/vi/F1xAUfdK9FE/maxresdefault.jpg') #actual image
+        await ctx.send('Please wait atleast 10 seconds before trying again.')
+        await client.get_reddit_connection('memes').refresh()
 
 if __name__ == '__main__':
     discord_bot.run(TOKEN)
