@@ -24,5 +24,11 @@ class Test:
         print(str(self.profanity_checker.contains_profanity(string)) + '::', string)
         
 test = Test()
-test.check_string()
-test.check_images()
+usage = '''Usage: 
+    !meme  : Sends a meme from the "ProgrammerHumor" Subreddit.
+    !funny : Sends a meme from the "memes" Subreddit (Tends to be NSFW, use wisely for now.)
+    !info  : Returns a Usage Guide for this bot.'''
+
+print(usage)
+#test.check_string()
+#test.check_images()

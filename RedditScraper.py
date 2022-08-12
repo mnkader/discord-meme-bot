@@ -1,13 +1,13 @@
+from Config import Config
+from ProfanityCheck import ProfanityCheck
 import praw
 import re
-import urllib.request
 
 class RedditScraper:
 
-    def __init__(self, path, client_id, client_secret, user_agent, subreddit, posts_limit, profanity_checker):
+    def __init__(self, config : Config, subreddit : str, profanity_checker : ProfanityCheck):
         self.profanity_check = profanity_checker
-        self.posts_limit = posts_limit
-        self.path = path
+        self.posts_limit = int(config.get_posts_limit())
         self.image_urls = []
         self.image_captions = []
         self.image_types = ['jpg','jpeg','gif','png']
@@ -16,9 +16,9 @@ class RedditScraper:
         self.counter = 0
         self.local_images = []
         
-        self.reddit = praw.Reddit(client_id = client_id, 
-                     client_secret = client_secret, 
-                     user_agent = user_agent)
+        self.reddit = praw.Reddit(client_id = config.get_client_id(), 
+                     client_secret = config.get_client_secret(), 
+                     user_agent = config.get_user_agent())
         self.subreddit = self.reddit.subreddit(subreddit)     
         self.load_image_types()
         self.refresh() 
