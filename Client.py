@@ -15,6 +15,8 @@ class Client:
         self.config = Config()
         self.profanity_check = ProfanityCheck('TODO', 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe')
         self.reddit_connections = {}
+        self.prev_meme = []
+        self.prev_funny = []
     
     def create_reddit_con(self, subreddit) -> RedditAsync:
         return RedditAsync(self.config, subreddit, self.profanity_check)
@@ -36,12 +38,27 @@ class Client:
     
     async def get_caption_and_image(self, subreddit : str) -> list:
         return await self.reddit_connections.get(subreddit).get_meme()  
+    
+    def set_prev_meme(self, meme):
+        self.prev_meme = meme
+
+    def get_prev_meme(self):
+        return self.prev_meme
+
+    def set_prev_funny(self, funny):
+        self.prev_funny = funny
+
+    def get_prev_funny(self):
+        return self.prev_funny
 
 client = Client()
+discord_bot = commands.Bot(command_prefix='!')
+usage = '''```Usage: 
+    !meme  : Sends a meme from the "ProgrammerHumor" Subreddit (SFW, Text-from-Image recognition might have a few gaps.).
+    !info  : Returns a Usage Guide for this bot.
+    !block list_of_words: A way to add profane words for future filtering, words to add is comma-delimited. e.g !block test,temp,tuna```'''
 
 TOKEN = client.get_token()
-
-discord_bot = commands.Bot(command_prefix='!')
 
 def refresh(connection : RedditAsync):
     connection.refresh()  
@@ -54,21 +71,15 @@ async def on_connect():
         await client.get_reddit_connection(my_list[x]).refresh()
     print('on connect')
 
-
 @discord_bot.event
 async def on_ready():
         print(
             f'{discord_bot.user} is connected.\n'
         )
 
-usage = '''```Usage: 
-    !meme  : Sends a meme from the "ProgrammerHumor" Subreddit (SFW, Text-from-Image recognition might have a few gaps.).
-    !info  : Returns a Usage Guide for this bot.
-    !block list_of_words: A way to add profane words for future filtering, words to add is comma-delimited. e.g !block test,temp,tuna```'''
-
 @discord_bot.command(name='block')
 async def block(ctx : commands.context.Context):   
-    message_content = ctx.message.content[:7]
+    message_content = ctx.message.content[7:]
     for word in message_content.split(','):
         client.profanity_check.add_bad_word(word) 
 
@@ -76,10 +87,23 @@ async def block(ctx : commands.context.Context):
 async def send_info(ctx):   
     await ctx.send(usage) 
 
+@discord_bot.command(name='resend')
+async def resend_meme(ctx):
+    if client.get_prev_meme != None:
+        await ctx.send(client.get_prev_meme()[0]) #image caption
+        await ctx.send(client.get_prev_meme()[1])  #actual image
+
+@discord_bot.command(name='again')
+async def resend_funny(ctx):
+    if client.get_prev_funny != None:
+        await ctx.send(client.get_prev_funny()[0]) #image caption
+        await ctx.send(client.get_prev_funny()[1])  #actual image
+
 @discord_bot.command(name='meme')
 async def send_programming_meme(ctx):
     data = await client.get_caption_and_image('ProgrammerHumor')
     if data[0] != None and data[1] != None:
+        client.set_prev_meme(data)
         await ctx.send(data[0]) #image caption
         await ctx.send(data[1])  #actual image
     else:
@@ -92,6 +116,7 @@ async def send_programming_meme(ctx):
 async def send_normal_meme(ctx):
     data = await client.get_caption_and_image('memes')
     if data[0] != None and data[1] != None:
+        client.set_prev_funny(data)
         await ctx.send(data[0]) #image caption
         await ctx.send(data[1])  #actual image
     else:
